@@ -32,8 +32,8 @@ var server = http.createServer(function (request, response) {
     }
     
     // Log the request
-    const ip = req.socket.localAddress;
-    const port = req.socket.localPort;
+    const ip = request.socket.localAddress;
+    const port = request.socket.localPort;
     console.log('Request from IP address ${ip} on port ${port}.');
 });
 
