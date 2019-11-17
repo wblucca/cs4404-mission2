@@ -9,13 +9,22 @@ const fs = require('fs');
 // Port to host server on
 const PORT = 8080;
 
+// Path of HTML file to use for the server's main webpage
+if (process.argv.length < 3) {
+    // No file specified, end program
+    console.log('Please specify an HTML page to use for the website.\n');
+    process.exit(1);
+} else {
+    var htmlPage = process.argv[2];
+}
+
 // Create the server instance with a callback that handles HTTP requests
 var server = http.createServer(function (request, response) {
     // Switch on their URL request to give client the appropriate file
     switch (request.url){
         case '/':
             // No specific filepath requested, respond with 'index.html'
-            sendFile(response, 'index.html');
+            sendFile(response, htmlPage);
             break;
         default:
             // File requested, respond with file at the given path
