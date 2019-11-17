@@ -7,7 +7,7 @@ const http = require('http');
 const fs = require('fs');
 
 // Port to host server on
-const PORT = 8080;
+const PORT = 80;
 
 // Path of HTML file to use for the server's main webpage
 if (process.argv.length < 3) {
@@ -30,6 +30,11 @@ var server = http.createServer(function (request, response) {
             // File requested, respond with file at the given path
             sendFile(response, request.url.substring(1));
     }
+    
+    // Log the request
+    const ip = req.socket.localAddress;
+    const port = req.socket.localPort;
+    console.log('Request from IP address ${ip} on port ${port}.');
 });
 
 /**
