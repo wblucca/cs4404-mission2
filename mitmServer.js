@@ -11,6 +11,7 @@ const server = dgram.createSocket('udp4');
 // Callback for handling messages
 server.on('message', function(msg, rinfo) {
   console.log('Message from ' + rinfo.address + ':' + rinfo.port);
+  console.log(msg.toString());
 });
 
 // Callback for printing potential errors
