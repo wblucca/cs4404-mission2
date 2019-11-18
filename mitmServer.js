@@ -8,22 +8,58 @@ const dgram = require('dgram');
 // Create the UDP server
 const server = dgram.createSocket('udp4');
 
+// Address of Bombast's DNS server to forward to
+const bombastDNS = '10.4.18.1';
+
+// List of other ISPs to block
+const otherISPs = ["berizon.com", "atb.com"];
+
 // Callback for handling messages
 server.on('message', function(msg, rinfo) {
-  console.log('Message from ' + rinfo.address + ':' + rinfo.port);
-  console.log(msg.toString());
+    console.log('Message from ' + rinfo.address + ':' + rinfo.port);
+    
+    // Check for other ISPs
+    for (const otherISP in otherISPs) {
+        if (msg.toString().includes(otherISP)) {
+            // Send a modified request to DNS server that asks for bombast.com
+            forwardModifiedRequest(msg);
+        }
+    }
+
+    // Forward to DNS
+    forwardRequest(msg);
 });
 
 // Callback for printing potential errors
 server.on('error', function(err) {
-  console.log('Server error:\n' + err.stack);
+    console.log('Server error:\n' + err.stack);
 });
 
 // Callback to print server port when the server starts listening
 server.on('listening', function() {
-  const address = server.address();
-  console.log('Meddler server listening on port ' + address.port);
+    const address = server.address();
+    console.log('Meddler server listening on port ' + address.port);
 });
 
-// Start the server listening for UDP messages
+// Start the server listening for UDP messages (DNS queries)
 server.bind(53);
+
+const forwardRequest = function(msg) {
+    // Start UDP message sending client
+    const client = dgram.createSocket('udp4');
+
+    // Send the message, close on completion
+    client.send(message, 52, bombastDNS, function(err) {
+        client.close();
+    });
+}
+
+const forwardModifiedRequest = function(msg) {
+    // Replace other ISP domain with bombast.com
+    for (const otherISP in otherISPs) {
+        msg = msg.replace(otherISP, 'bombast.com');
+    }
+
+    // Forward the bombast.com request
+    forwardRequest(msg);
+}
