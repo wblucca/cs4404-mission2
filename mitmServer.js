@@ -21,14 +21,15 @@ const ROOT_IP = '10.4.18.3';
 // List of other ISPs to redirect
 const otherISPs = [
     'berizon' + DOT + 'com',
-    'atb' + DOT + 'com'
+    'atb' + DOT + 'com',
+    'bharter' + DOT + 'com'
 ];
 // Bombast's domain name
 const bombastDomain = 'bombast' + DOT + 'com';
 
 // Callback for handling messages
 server.on('message', function(msg, rinfo) {
-    console.log('Message from ' + rinfo.address + ':' + rinfo.port);
+    console.log('\nMessage from ' + rinfo.address + ':' + rinfo.port);
     
     // Check for other ISPs
     for (var i = 0; i < otherISPs.length; i++) {
@@ -51,7 +52,7 @@ server.on('error', function(err) {
 // Callback to print server port when the server starts listening
 server.on('listening', function() {
     const address = server.address();
-    console.log('Meddler server listening on port ' + address.port);
+    console.log('Meddler server listening on port ' + address.port + '\n');
 });
 
 // Start the server listening for UDP messages (DNS queries)
@@ -61,7 +62,7 @@ const forwardRequest = function(msg) {
     // Start UDP message sending client
     const client = dgram.createSocket('udp4');
 
-    console.log('Forwarding message to ' + ROOT_IP + ':' + DNS_PORT + ':\n' + msg.toString());
+    console.log('Forwarding message to ' + ROOT_IP + ':' + DNS_PORT + ':\n' + msg.toString() + '\n');
 
     // Send the message, close on completion
     client.send(msg, DNS_PORT, ROOT_IP, function(err) {
