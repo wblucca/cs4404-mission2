@@ -5,7 +5,7 @@
 
 # Modified 19 November, 2019 by William Lucca
 
-from scapy.all import *
+from scapy.all import DNS, IP, sr1, UDP
 from netfilterqueue import NetfilterQueue
 
 def modify(packet):
@@ -23,9 +23,9 @@ def modify(packet):
     packet.accept()
 
 
-nfqueue = NetfilterQueue()
+nfqueue = NetfilterQueue()  
 
-#1 is the iptables rule queue number, modify is the callback function
+# 1 is the iptables rule queue number, modify is the callback function
 nfqueue.bind(1, modify) 
 try:
     print "[*] waiting for data"
